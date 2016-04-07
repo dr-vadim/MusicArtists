@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">MusicArtists</string>
+    <string name="albums_count">альбомов</string>
+    <string name="tracks_count">песен</string>
+</resources>
