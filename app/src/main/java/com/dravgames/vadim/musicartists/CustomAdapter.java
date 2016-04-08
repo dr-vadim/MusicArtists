@@ -13,6 +13,8 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import org.json.JSONException;
+
 import java.io.InputStream;
 import java.util.List;
 
@@ -68,8 +70,12 @@ public class CustomAdapter extends ArrayAdapter<String> {
         String albumsStr = objectItem.getAlbums()+" "+context.getResources().getString(R.string.albums_count);
         String tracksStr = objectItem.getTracks()+" "+context.getResources().getString(R.string.tracks_count);
         albums.setText(albumsStr+", "+tracksStr);
-        new DownloadImageTask(thumbImage)
-                .execute(objectItem.getImage());
+        try {
+            new DownloadImageTask(thumbImage)
+                    .execute(objectItem.getImage());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
         //thumbImage.setImageDrawable(objectItem.getImage());
 
         return view;

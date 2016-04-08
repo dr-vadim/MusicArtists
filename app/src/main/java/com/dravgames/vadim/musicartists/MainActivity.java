@@ -78,42 +78,28 @@ public class MainActivity extends ActionBarActivity {
         @Override
         protected void onPostExecute(String strJson) {
             super.onPostExecute(strJson);
-            // выводим целиком полученную json-строку
-            Log.d(LOG_TAG, strJson);
-
-            JSONObject dataJsonObj = null;
-            String secondName = "";
 
             try {
-                //dataJsonObj = new JSONObject(strJson);
                 JSONArray artists = new JSONArray(strJson);
 
-                // 1. достаем инфо о втором друге - индекс 1
-                /*JSONObject secondFriend = friends.getJSONObject(1);
-                secondName = secondFriend.getString("name");
-                Log.d(LOG_TAG, "Второе имя: " + secondName);*/
                 int count = artists.length();
                 List<ObjectItem> list = new ArrayList<ObjectItem>();
-                // 2. перебираем и выводим контакты каждого друга
+
                 for (int i = 0; i < count; i++) {
                     JSONObject artist = artists.getJSONObject(i);
 
-                    //JSONArray genres = artist.getJSONArray("genres");
-                   // String strGenres = genres.join(",");
-
                     JSONObject cover = artist.getJSONObject("cover");
-                    //JSONArray cover = artist.getJSONArray("cover");
                     String name = artist.getString("name");
-                    String smallImage = cover.getString("small");
+                    String descr = artist.getString("description");
+
                     List<String> genres = new ArrayList<String>();
                     for (int j = 0; j < artist.getJSONArray("genres").length(); j++) {
                         genres.add( artist.getJSONArray("genres").getString(j) );
                     }
 
-                    //String[] genres = artist.getJSONArray("genres").toString().replace("},{", " ,").split(" ");
                     int albums = artist.getInt("albums");
                     int tracks = artist.getInt("tracks");
-                    ObjectItem item = new ObjectItem(name,smallImage,genres, albums, tracks);
+                    ObjectItem item = new ObjectItem(name, descr, cover,genres, albums, tracks);
                     list.add(item);
                 }
 
@@ -134,31 +120,6 @@ public class MainActivity extends ActionBarActivity {
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-        }
-    }
-
-    private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
-        ImageView bmImage;
-
-        public DownloadImageTask(ImageView bmImage) {
-            this.bmImage = bmImage;
-        }
-
-        protected Bitmap doInBackground(String... urls) {
-            String urldisplay = urls[0];
-            Bitmap mIcon11 = null;
-            try {
-                InputStream in = new java.net.URL(urldisplay).openStream();
-                mIcon11 = BitmapFactory.decodeStream(in);
-            } catch (Exception e) {
-                Log.e("Error", e.getMessage());
-                e.printStackTrace();
-            }
-            return mIcon11;
-        }
-
-        protected void onPostExecute(Bitmap result) {
-            bmImage.setImageBitmap(result);
         }
     }
 }

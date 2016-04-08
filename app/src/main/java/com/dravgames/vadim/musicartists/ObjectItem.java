@@ -3,6 +3,9 @@ package com.dravgames.vadim.musicartists;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 
+import org.json.JSONObject;
+import org.json.JSONException;
+
 import java.util.List;
 
 /**
@@ -10,13 +13,15 @@ import java.util.List;
  */
 public class ObjectItem {
 
-    private String title, image;
+    private String title, description;
+    private JSONObject images;
     private List<String> genres;
     private int albums, tracks;
 
-    public ObjectItem(String ttl, String img, List<String> genres, int albums, int tracks){
+    public ObjectItem(String ttl, String descr, JSONObject images, List<String> genres, int albums, int tracks){
         this.title = ttl;
-        this.image = img;
+        this.description = descr;
+        this.images = images;
         this.genres = genres;
         this.albums = albums;
         this.tracks = tracks;
@@ -58,11 +63,23 @@ public class ObjectItem {
         this.tracks = songs;
     }
 
-    public String getImage(){
-        return image;
+    public String getImage() throws JSONException {
+        return images.getString("small");
     }
 
-    public void setImage(String img){
-        image = img;
+    public String getImage(String name) throws JSONException{
+        return images.getString(name);
+    }
+
+    public void setImage(JSONObject images){
+        this.images = images;
+    }
+
+    public String getDescription(){
+        return description;
+    }
+
+    public void setDescription(String descr){
+        this.description = descr;
     }
 }
