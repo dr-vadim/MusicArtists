@@ -6,12 +6,13 @@ import android.text.TextUtils;
 import org.json.JSONObject;
 import org.json.JSONException;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * Created by Vadim on 06.04.2016.
  */
-public class ObjectItem {
+public class ObjectItem implements Serializable {
 
     private String title, description;
     private JSONObject images;
@@ -43,6 +44,10 @@ public class ObjectItem {
         return TextUtils.join(delimeter,genres);
     }
 
+    public List<String> getGenresList(){
+        return this.genres;
+    }
+
     public void setGenres(List<String> genres){
         this.genres = genres;
     }
@@ -69,6 +74,10 @@ public class ObjectItem {
 
     public String getImage(String name) throws JSONException{
         return images.getString(name);
+    }
+
+    public JSONObject getImages(){
+        return images;
     }
 
     public void setImage(JSONObject images){

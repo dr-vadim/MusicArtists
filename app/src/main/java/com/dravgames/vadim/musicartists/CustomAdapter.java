@@ -42,6 +42,10 @@ public class CustomAdapter extends ArrayAdapter<String> {
         return data.get(position).getTitle();
     }
 
+    public ObjectItem getObjectItem(int position){
+        return data.get(position);
+    }
+
 
     @Override
     public long getItemId(int position) {

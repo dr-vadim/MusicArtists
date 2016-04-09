@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Debug;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -112,6 +113,30 @@ public class MainActivity extends AppCompatActivity {
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         Toast.makeText(getApplicationContext(), adapter.getItem(position).toString(),
                                 Toast.LENGTH_SHORT).show();
+                        Intent more = new Intent(context, MoreAbout.class);
+                        List<String> genres = new ArrayList<String>();
+                        genres.add("pop");
+                        ObjectItem artist = adapter.getObjectItem(position);
+                        Log.d(LOG_TAG,artist.getTitle());
+                        Log.d(LOG_TAG,artist.getDescription());
+                        Log.d(LOG_TAG,artist.getImages().toString());
+                        Log.d(LOG_TAG,artist.getGenresList().toString());
+
+                        try {
+                            more.putExtra("image", artist.getImage("big"));
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        more.putExtra("name", artist.getTitle());
+                        more.putExtra("descr", artist.getDescription());
+                        more.putExtra("genres", artist.getGenres(", "));
+                        more.putExtra("albums", artist.getAlbums());
+                        more.putExtra("tracks", artist.getTracks());
+                        /*more.putExtra("artist", new ObjectItem(artist.getTitle(), artist.getDescription(), artist.getImages() ,
+                                artist.getGenresList(), artist.getAlbums(), artist.getTracks()
+                        ));*/
+                        //more.putExtra("artist", artist);
+                        startActivity(more);
                     }
                 });
 
