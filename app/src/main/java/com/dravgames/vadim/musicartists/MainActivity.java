@@ -6,10 +6,13 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Debug;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ListView;
+//import android.widget.AbsListView;
 import android.widget.Toast;
 
 import org.json.JSONArray;
@@ -28,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
 
     public static String LOG_TAG = "my_log";
 
+    private RecyclerView recyclerView;
     private ListView listView;
     private CustomAdapter adapter;
     private Context context;
@@ -102,25 +106,28 @@ public class MainActivity extends AppCompatActivity {
                     list.add(item);
                 }
 
-                listView = (ListView) findViewById(R.id.listView);
+                /*recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
+
                 // инициализация нашего адаптера
                 adapter = new CustomAdapter(context, list);
+                recyclerView.setAdapter(adapter);*/
+
+                listView = (ListView) findViewById(R.id.listView);
+                adapter = new CustomAdapter(context, list);
                 listView.setAdapter(adapter);
+
 
                 // По клику будем выводить текст элемента
                 listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        adapter.closeAllTasks();
                         Toast.makeText(getApplicationContext(), adapter.getItem(position).toString(),
                                 Toast.LENGTH_SHORT).show();
                         Intent more = new Intent(context, MoreAbout.class);
                         List<String> genres = new ArrayList<String>();
                         genres.add("pop");
                         ObjectItem artist = adapter.getObjectItem(position);
-                        Log.d(LOG_TAG,artist.getTitle());
-                        Log.d(LOG_TAG,artist.getDescription());
-                        Log.d(LOG_TAG,artist.getImages().toString());
-                        Log.d(LOG_TAG,artist.getGenresList().toString());
 
                         try {
                             more.putExtra("image", artist.getImage("big"));
@@ -132,13 +139,34 @@ public class MainActivity extends AppCompatActivity {
                         more.putExtra("genres", artist.getGenres(", "));
                         more.putExtra("albums", artist.getAlbums());
                         more.putExtra("tracks", artist.getTracks());
-                        /*more.putExtra("artist", new ObjectItem(artist.getTitle(), artist.getDescription(), artist.getImages() ,
-                                artist.getGenresList(), artist.getAlbums(), artist.getTracks()
-                        ));*/
                         //more.putExtra("artist", artist);
                         startActivity(more);
                     }
                 });
+/*
+                listView.setOnScrollListener(new AbsListView.OnScrollListener() {
+                    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                    }
+
+                    public void onScrollStateChanged(AbsListView view, int scrollState) {
+                        if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
+                            adapter.setFlinging(false);
+                            //Log.d(LOG_TAG, "scrollState == "+AbsListView.OnScrollListener.SCROLL_STATE_IDLE);
+                            //Log.d(LOG_TAG,"setFlinging false");
+                            int firstVisibleItem = listView.getFirstVisiblePosition();
+                            //listView.fin
+                            int lastVisiblePosition = listView.getLastVisiblePosition();
+                            for(int i = firstVisibleItem; i <= lastVisiblePosition; i++){
+                                adapter.loadImage(i,view);
+                            }
+
+                        }else if(scrollState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL){
+                            adapter.setFlinging(true);
+                            //Log.d(LOG_TAG, "scrollState == "+AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL);
+                            //Log.d(LOG_TAG, "setFlinging true");
+                        }
+                    }
+                });*/
 
             } catch (JSONException e) {
                 e.printStackTrace();

@@ -16,6 +16,7 @@ import android.widget.TextView;
 import org.json.JSONException;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -24,12 +25,14 @@ import java.util.List;
 public class CustomAdapter extends ArrayAdapter<String> {
 
     private List<ObjectItem> data;
+    private List<DawnloadImageTask> tasks;
     private Context context;
 
     public CustomAdapter(Context context, List<ObjectItem> data){
         super(context, R.layout.artists_list);
         this.data = data;
         this.context = context;
+        tasks = new ArrayList<DawnloadImageTask>();
     }
 
     @Override
@@ -50,6 +53,14 @@ public class CustomAdapter extends ArrayAdapter<String> {
     @Override
     public long getItemId(int position) {
         return position;
+    }
+
+    public void closeAllTasks(){
+        for (DawnloadImageTask task: tasks){
+            if(task.getStatus().equals(AsyncTask.Status.RUNNING)){
+                task.cancel(true);
+            }
+        }
     }
 
     // заполнение элементов списка
@@ -75,8 +86,9 @@ public class CustomAdapter extends ArrayAdapter<String> {
         String tracksStr = objectItem.getTracks()+" "+context.getResources().getString(R.string.tracks_count);
         albums.setText(albumsStr+", "+tracksStr);
         try {
-            new DownloadImageTask(thumbImage)
-                    .execute(objectItem.getImage());
+            DawnloadImageTask dawnloadImageTask = new DawnloadImageTask(thumbImage);
+            dawnloadImageTask.execute(objectItem.getImage());
+            tasks.add(dawnloadImageTask);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -85,10 +97,10 @@ public class CustomAdapter extends ArrayAdapter<String> {
         return view;
     }
 
-    private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
+    private class DawnloadImageTask extends AsyncTask<String, Void, Bitmap> {
         ImageView bmImage;
 
-        public DownloadImageTask(ImageView bmImage) {
+        public DawnloadImageTask(ImageView bmImage) {
             this.bmImage = bmImage;
         }
 
