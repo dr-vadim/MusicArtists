@@ -6,7 +6,9 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Debug;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.RecyclerView.OnScrollListener;
 import android.util.Log;
 import android.view.View;
 import android.widget.AbsListView;
@@ -34,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private ListView listView;
     private CustomAdapter adapter;
+    private RecycleAdapter RAdapter;
     private Context context;
 
     @Override
@@ -92,6 +95,8 @@ public class MainActivity extends AppCompatActivity {
                     JSONObject artist = artists.getJSONObject(i);
 
                     JSONObject cover = artist.getJSONObject("cover");
+
+                    int id = artist.getInt("id");
                     String name = artist.getString("name");
                     String descr = artist.getString("description");
 
@@ -102,71 +107,59 @@ public class MainActivity extends AppCompatActivity {
 
                     int albums = artist.getInt("albums");
                     int tracks = artist.getInt("tracks");
-                    ObjectItem item = new ObjectItem(name, descr, cover,genres, albums, tracks);
+                    ObjectItem item = new ObjectItem(id, name, descr, cover,genres, albums, tracks);
                     list.add(item);
                 }
 
-                /*recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
+                recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
+
+                LinearLayoutManager llm = new LinearLayoutManager(context);
+                recyclerView.setLayoutManager(llm);
 
                 // инициализация нашего адаптера
-                adapter = new CustomAdapter(context, list);
-                recyclerView.setAdapter(adapter);*/
+                RAdapter = new RecycleAdapter(context, list);
+                recyclerView.setAdapter(RAdapter);
 
-                listView = (ListView) findViewById(R.id.listView);
-                adapter = new CustomAdapter(context, list);
-                listView.setAdapter(adapter);
+                recyclerView.addOnItemTouchListener(
+                        new RecyclerItemClickListener(context, new RecyclerItemClickListener.OnItemClickListener() {
+                            @Override
+                            public void onItemClick(View view, int position) {
 
+                                RAdapter.closeAllTasks();
+                                final int result = 1;
+                                Intent more = new Intent(context, MoreAbout.class);
+                                List<String> genres = new ArrayList<String>();
+                                genres.add("pop");
+                                ObjectItem artist = RAdapter.getObjectItem(position);
 
-                // По клику будем выводить текст элемента
-                listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        adapter.closeAllTasks();
-                        Toast.makeText(getApplicationContext(), adapter.getItem(position).toString(),
-                                Toast.LENGTH_SHORT).show();
-                        Intent more = new Intent(context, MoreAbout.class);
-                        List<String> genres = new ArrayList<String>();
-                        genres.add("pop");
-                        ObjectItem artist = adapter.getObjectItem(position);
+                                try {
+                                    more.putExtra("image", artist.getImage("big"));
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                                more.putExtra("name", artist.getTitle());
+                                more.putExtra("descr", artist.getDescription());
+                                more.putExtra("genres", artist.getGenres(", "));
+                                more.putExtra("albums", artist.getAlbums());
+                                more.putExtra("tracks", artist.getTracks());
+                                //more.putExtra("artist", artist);
+                                //startActivity(more);
+                                startActivityForResult(more,result);
+                            }
+                        })
+                );
 
-                        try {
-                            more.putExtra("image", artist.getImage("big"));
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        more.putExtra("name", artist.getTitle());
-                        more.putExtra("descr", artist.getDescription());
-                        more.putExtra("genres", artist.getGenres(", "));
-                        more.putExtra("albums", artist.getAlbums());
-                        more.putExtra("tracks", artist.getTracks());
-                        //more.putExtra("artist", artist);
-                        startActivity(more);
+                recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
+
+                    public void onScrollStateChanged(RecyclerView view, int newState){
+                        //if(newState == view.SCROLL_STATE_IDLE) {
+                            LinearLayoutManager llm = (LinearLayoutManager) view.getLayoutManager();
+                            int top = llm.findFirstVisibleItemPosition();
+                            int bottom = llm.findLastVisibleItemPosition();
+                            RAdapter.setVisibleItems(top, bottom);
+                        //}
                     }
                 });
-/*
-                listView.setOnScrollListener(new AbsListView.OnScrollListener() {
-                    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                    }
-
-                    public void onScrollStateChanged(AbsListView view, int scrollState) {
-                        if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
-                            adapter.setFlinging(false);
-                            //Log.d(LOG_TAG, "scrollState == "+AbsListView.OnScrollListener.SCROLL_STATE_IDLE);
-                            //Log.d(LOG_TAG,"setFlinging false");
-                            int firstVisibleItem = listView.getFirstVisiblePosition();
-                            //listView.fin
-                            int lastVisiblePosition = listView.getLastVisiblePosition();
-                            for(int i = firstVisibleItem; i <= lastVisiblePosition; i++){
-                                adapter.loadImage(i,view);
-                            }
-
-                        }else if(scrollState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL){
-                            adapter.setFlinging(true);
-                            //Log.d(LOG_TAG, "scrollState == "+AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL);
-                            //Log.d(LOG_TAG, "setFlinging true");
-                        }
-                    }
-                });*/
 
             } catch (JSONException e) {
                 e.printStackTrace();

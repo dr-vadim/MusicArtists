@@ -17,15 +17,24 @@ public class ObjectItem implements Serializable {
     private String title, description;
     private JSONObject images;
     private List<String> genres;
-    private int albums, tracks;
+    private int albums, tracks, id;
 
-    public ObjectItem(String ttl, String descr, JSONObject images, List<String> genres, int albums, int tracks){
+    public ObjectItem(int id,String ttl, String descr, JSONObject images, List<String> genres, int albums, int tracks){
+        this.id = id;
         this.title = ttl;
         this.description = descr;
         this.images = images;
         this.genres = genres;
         this.albums = albums;
         this.tracks = tracks;
+    }
+
+    public int getId(){
+        return id;
+    }
+
+    public void setId(int id){
+        this.id = id;
     }
 
     public String getTitle(){
