@@ -38,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     private CustomAdapter adapter;
     private RecycleAdapter RAdapter;
     private Context context;
+    LinearLayoutManager llm;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
 
                 recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
 
-                LinearLayoutManager llm = new LinearLayoutManager(context);
+                llm = new LinearLayoutManager(context);
                 recyclerView.setLayoutManager(llm);
 
                 // инициализация нашего адаптера
@@ -148,16 +149,14 @@ public class MainActivity extends AppCompatActivity {
                             }
                         })
                 );
-
+                //LinearLayoutManager llm = (LinearLayoutManager) RecyclerView.getLayoutManager();
                 recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
-
-                    public void onScrollStateChanged(RecyclerView view, int newState){
-                        //if(newState == view.SCROLL_STATE_IDLE) {
-                            LinearLayoutManager llm = (LinearLayoutManager) view.getLayoutManager();
-                            int top = llm.findFirstVisibleItemPosition();
-                            int bottom = llm.findLastVisibleItemPosition();
-                            RAdapter.setVisibleItems(top, bottom);
-                        //}
+                    @Override
+                    public void onScrolled(RecyclerView view, int dx, int dy) {
+                        super.onScrolled(view, dx, dy);
+                        int top = llm.findFirstVisibleItemPosition();
+                        int bottom = llm.findLastVisibleItemPosition();
+                        RAdapter.setVisibleItems(top, bottom);
                     }
                 });
 

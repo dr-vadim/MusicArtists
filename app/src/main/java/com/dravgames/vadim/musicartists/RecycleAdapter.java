@@ -119,12 +119,20 @@ public class RecycleAdapter extends RecyclerView.Adapter<RecycleAdapter.ViewHold
         return data.get(position).getTitle();
     }
 
+    /**
+     * Функция устанавливает значения индекса самому верхнему и самому нижнему видимых элементов списка
+     * @param top верхний видемый элемент
+     * @param bottom нижни видимый элемент
+     */
     public void setVisibleItems(int top,int bottom){
         this.top = top;
         this.bottom = bottom;
         Log.d(LOG_TAG,"top="+top+"::bottom="+bottom+"");
     }
 
+    /**
+     * Функция останавливает запущенные асинхронные задачи сохраненные в списке tasks
+     */
     public void closeAllTasks(){
         for (DawnloadImageTask task: tasks){
             if(task.getStatus().equals(AsyncTask.Status.RUNNING)){
@@ -133,10 +141,18 @@ public class RecycleAdapter extends RecyclerView.Adapter<RecycleAdapter.ViewHold
         }
     }
 
+    /**
+     * Получаем объект из списка
+     * @param index объекта
+     * @return объект
+     */
     public ObjectItem getObjectItem(int index){
         return data.get(index);
     }
 
+    /**
+     * Класс для загрузки изображений ассинхронно
+     */
     private class DawnloadImageTask extends AsyncTask<String, Void, Bitmap> {
         ImageView bmImage;
         int id, position;
