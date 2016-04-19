@@ -3,4 +3,7 @@
     <string name="albums_count">альбомов</string>
     <string name="tracks_count">песен</string>
     <string name="biografy_title_txt">Биография</string>
+    <string name="refresh_connectin_btn_text">Обновить</string>
+    <string name="attention_txt">Внимание!</string>
+    <string name="need_connection_txt">Необходимо интернет соединение</string>
 </resources>

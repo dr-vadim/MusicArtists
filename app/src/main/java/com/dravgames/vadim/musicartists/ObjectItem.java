@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class ObjectItem implements Serializable {
 
-    private String title, description;
+    private String title, description, link = "";
     private JSONObject images;
     private List<String> genres;
     private int albums, tracks, id;
@@ -99,5 +99,13 @@ public class ObjectItem implements Serializable {
 
     public void setDescription(String descr){
         this.description = descr;
+    }
+
+    public void setLink(String link){
+        this.link = link;
+    }
+
+    public String getLink(){
+        return link;
     }
 }

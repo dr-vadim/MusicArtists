@@ -5,8 +5,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
-import android.os.Environment;
-import android.support.v4.util.LruCache;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,7 +14,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.jakewharton.disklrucache.DiskLruCache;
+import com.jakewharton.disklrucache.Util;
 
 import org.json.JSONException;
 
@@ -83,7 +81,7 @@ public class RecycleAdapter extends RecyclerView.Adapter<RecycleAdapter.ViewHold
         holder.albums.setText(albumsStr+", "+tracksStr);
 
         int id = objectItem.getId();
-        boolean cache = diskLruImageCache.containsKey(String.valueOf(id));
+        boolean cache = diskLruImageCache.containsKey(id+"");
         if(!cache) {
             try {
                 DawnloadImageTask dawnloadImageTask = new DawnloadImageTask(id, holder.thumbImage, position);
@@ -157,7 +155,7 @@ public class RecycleAdapter extends RecyclerView.Adapter<RecycleAdapter.ViewHold
         ImageView bmImage;
         int id, position;
 
-        public DawnloadImageTask(int id,ImageView bmImage, int position) {
+        public DawnloadImageTask(int id, ImageView bmImage, int position) {
             this.bmImage = bmImage;
             bmImage.setImageResource(R.drawable.misic_thumb);
             this.id = id;
@@ -171,7 +169,7 @@ public class RecycleAdapter extends RecyclerView.Adapter<RecycleAdapter.ViewHold
             try {
                 InputStream in = new java.net.URL(urldisplay).openStream();
                 bitmap = BitmapFactory.decodeStream(in);
-                diskLruImageCache.put(String.valueOf(id),bitmap);
+                diskLruImageCache.put(""+id, bitmap);
             } catch (Exception e) {
                 Log.e("Error", e.getMessage());
                 e.printStackTrace();
@@ -180,11 +178,7 @@ public class RecycleAdapter extends RecyclerView.Adapter<RecycleAdapter.ViewHold
         }
 
         protected void onPostExecute(Bitmap result) {
-            if(((position >= top && position <= bottom) || bottom == 0) && result != null){
-                Log.d(LOG_TAG, "++position >= top = " + (position >= top));
-                Log.d(LOG_TAG, "++position <= bottom = " + (position <= bottom));
-                Log.d(LOG_TAG, "bottom == 0 =" + (bottom == 0));
-                Log.d(LOG_TAG, "position = "+position);
+            if (((position >= top && position <= bottom) || bottom == 0) && result != null) {
                 bmImage.setImageBitmap(result);
             }
         }

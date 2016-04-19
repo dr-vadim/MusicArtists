@@ -1,10 +1,16 @@
 package com.dravgames.vadim.musicartists;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Debug;
+import android.sax.StartElementListener;
+import android.support.v4.util.LruCache;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -22,16 +28,29 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+
+
 public class MainActivity extends AppCompatActivity {
 
     public static String LOG_TAG = "my_log";
+    public File pathToJson = null;
+    final public String linkToJson = "http://cache-kiev05.cdn.yandex.net/download.cdn.yandex.net/mobilization-2016/artists.json";
+    public String jsonName = "artists";
+
+    public static Activity activity;
 
     private RecyclerView recyclerView;
     private ListView listView;
@@ -43,8 +62,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        activity = this;
         context = this;
         setContentView(R.layout.activity_main);
+        pathToJson = new File(getFilesDir(),"Data");
         new ParseTask().execute();
     }
 
@@ -57,27 +78,36 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(Void... params) {
             // получаем данные с внешнего ресурса
-            try {
-                URL url = new URL("http://cache-kiev05.cdn.yandex.net/download.cdn.yandex.net/mobilization-2016/artists.json");
+            if(Utils.isOnline(context)){
+                try {
+                    URL url = new URL(linkToJson);
 
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.connect();
+                    urlConnection = (HttpURLConnection) url.openConnection();
+                    urlConnection.setRequestMethod("GET");
+                    urlConnection.connect();
 
-                InputStream inputStream = urlConnection.getInputStream();
-                StringBuffer buffer = new StringBuffer();
+                    InputStream inputStream = urlConnection.getInputStream();
+                    StringBuffer buffer = new StringBuffer();
 
-                reader = new BufferedReader(new InputStreamReader(inputStream));
+                    reader = new BufferedReader(new InputStreamReader(inputStream));
 
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    buffer.append(line);
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        buffer.append(line);
+                    }
+
+                    resultJson = buffer.toString();
+                    writeToFile(resultJson);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-
-                resultJson = buffer.toString();
-
-            } catch (Exception e) {
-                e.printStackTrace();
+            }else{
+                File f = new File(pathToJson,jsonName+".json");
+                if(f.exists() && f.isFile()){
+                    Log.d(LOG_TAG, "File exist and is file");
+                    resultJson = readFile(f);
+                }
             }
             return resultJson;
         }
@@ -85,6 +115,18 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String strJson) {
             super.onPostExecute(strJson);
+
+            if(strJson.isEmpty()){
+                AlertDialog.Builder dialog = new AlertDialog.Builder(context);
+                dialog.setTitle( R.string.attention_txt )
+                        .setMessage(R.string.need_connection_txt)
+                        .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialoginterface, int i) {
+                                Intent noConnection = new Intent(context, NoConnection.class);
+                                startActivity(noConnection);
+                            }
+                        }).show();
+            }
 
             try {
                 JSONArray artists = new JSONArray(strJson);
@@ -109,6 +151,9 @@ public class MainActivity extends AppCompatActivity {
                     int albums = artist.getInt("albums");
                     int tracks = artist.getInt("tracks");
                     ObjectItem item = new ObjectItem(id, name, descr, cover,genres, albums, tracks);
+                    if(!artist.isNull("link")){
+                        item.setLink(artist.getString("link"));
+                    }
                     list.add(item);
                 }
 
@@ -138,18 +183,20 @@ public class MainActivity extends AppCompatActivity {
                                 } catch (JSONException e) {
                                     e.printStackTrace();
                                 }
+
+                                more.putExtra("id", artist.getId());
                                 more.putExtra("name", artist.getTitle());
                                 more.putExtra("descr", artist.getDescription());
                                 more.putExtra("genres", artist.getGenres(", "));
                                 more.putExtra("albums", artist.getAlbums());
                                 more.putExtra("tracks", artist.getTracks());
-                                //more.putExtra("artist", artist);
-                                //startActivity(more);
-                                startActivityForResult(more,result);
+                                more.putExtra("link", artist.getLink());
+
+                                startActivityForResult(more, result);
                             }
                         })
                 );
-                //LinearLayoutManager llm = (LinearLayoutManager) RecyclerView.getLayoutManager();
+
                 recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
                     @Override
                     public void onScrolled(RecyclerView view, int dx, int dy) {
@@ -164,5 +211,48 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         }
+    }
+
+    private void writeToFile(String data) {
+        if(!pathToJson.exists()){
+            pathToJson.mkdir();
+        }
+        File f = new File(pathToJson,jsonName+".json");
+        try{
+            FileWriter file = new FileWriter(f);
+            file.write(data);
+            file.flush();
+            file.close();
+        } catch (IOException e) {
+            Log.e(LOG_TAG, e.getMessage());
+        }
+    }
+
+    private String readFile(File file){
+        String ret = "";
+        try {
+            FileInputStream fis = new FileInputStream (file);
+
+            if ( fis != null ) {
+                InputStreamReader inputStreamReader = new InputStreamReader(fis);
+                BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+                String receiveString = "";
+                StringBuilder stringBuilder = new StringBuilder();
+
+                while ( (receiveString = bufferedReader.readLine()) != null ) {
+                    stringBuilder.append(receiveString);
+                }
+
+                fis.close();
+                ret = stringBuilder.toString();
+            }
+        }
+        catch (FileNotFoundException e) {
+            Log.e(LOG_TAG, "File not found: " + e.toString());
+        } catch (IOException e) {
+            Log.e(LOG_TAG, "Can not read file: " + e.toString());
+        }
+
+        return ret;
     }
 }
