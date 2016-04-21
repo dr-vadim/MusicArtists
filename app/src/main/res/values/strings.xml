@@ -6,4 +6,5 @@
     <string name="refresh_connectin_btn_text">Обновить</string>
     <string name="attention_txt">Внимание!</string>
     <string name="need_connection_txt">Необходимо интернет соединение</string>
+    <string name="internet_connetction_title_txt">Интернет соединение</string>
 </resources>

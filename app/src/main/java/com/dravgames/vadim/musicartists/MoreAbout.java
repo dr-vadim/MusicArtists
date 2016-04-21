@@ -1,17 +1,13 @@
 package com.dravgames.vadim.musicartists;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.NavUtils;
-import android.support.v4.util.LruCache;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.telecom.Call;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
@@ -20,8 +16,6 @@ import android.widget.TextView;
 import android.util.Log;
 
 import java.io.InputStream;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 
 public class MoreAbout extends AppCompatActivity {
 
@@ -45,11 +39,16 @@ public class MoreAbout extends AppCompatActivity {
         if (ab != null) {
             ab.setDisplayHomeAsUpEnabled(true);
         }
+        //Initialize cache
         diskLruImageCache = new DiskLruImageCache(this,DISK_CACHE_SUBDIR,DISK_CACHE_SIZE,Bitmap.CompressFormat.JPEG,70);
 
         getData(ab);
     }
 
+    /**
+     * Get the data send by main activity and set them to layout
+     * @param ab ActionBar object
+     */
     public void getData(ActionBar ab){
         Intent intent = getIntent();
         int id = intent.getIntExtra("id", 0);
@@ -75,6 +74,7 @@ public class MoreAbout extends AppCompatActivity {
         albumsTextView.setText(albumsStr + ", " + tracksStr);
         descrTextView.setText(descr);
 
+        // Get image from cache by key if exist else put image to cache
         boolean cache = diskLruImageCache.containsKey(""+id);
         if (!cache)
             new DownloadImageTask(image, id).execute(imageUrl);
@@ -85,6 +85,9 @@ public class MoreAbout extends AppCompatActivity {
         }
     }
 
+    /**
+     * Return to list of artists
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == android.R.id.home){
@@ -95,6 +98,20 @@ public class MoreAbout extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+
+    /**
+     * Return to list of artists
+     */
+    @Override
+    public void onBackPressed() {
+        finish();
+        this.overridePendingTransition(R.anim.back, R.anim.back);
+    }
+
+    /**
+     * Open web link when click the image and link is not empty
+     * @param view
+     */
     public void openWebLink(View view){
         if(!link.isEmpty()) {
             try {
@@ -106,12 +123,9 @@ public class MoreAbout extends AppCompatActivity {
         }
     }
 
-    @Override
-    public void onBackPressed() {
-        finish();
-        this.overridePendingTransition(R.anim.back, R.anim.back);
-    }
-
+    /**
+     * Getting and setting the main image from url link
+     */
     private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
         ImageView bmImage;
         int id = 0;

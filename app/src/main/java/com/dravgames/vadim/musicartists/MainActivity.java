@@ -5,22 +5,14 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Debug;
-import android.sax.StartElementListener;
-import android.support.v4.util.LruCache;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.RecyclerView.OnScrollListener;
 import android.util.Log;
 import android.view.View;
-import android.widget.AbsListView;
-import android.widget.AdapterView;
 import android.widget.ListView;
-//import android.widget.AbsListView;
 import android.widget.Toast;
 
 import org.json.JSONArray;
@@ -53,8 +45,6 @@ public class MainActivity extends AppCompatActivity {
     public static Activity activity;
 
     private RecyclerView recyclerView;
-    private ListView listView;
-    private CustomAdapter adapter;
     private RecycleAdapter RAdapter;
     private Context context;
     LinearLayoutManager llm;
@@ -77,9 +67,11 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected String doInBackground(Void... params) {
-            // получаем данные с внешнего ресурса
+            // check internet connection
             if(Utils.isOnline(context)){
+                // if internet connection exist load the data
                 try {
+                    // geting json data fron url link
                     URL url = new URL(linkToJson);
 
                     urlConnection = (HttpURLConnection) url.openConnection();
@@ -97,13 +89,17 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     resultJson = buffer.toString();
+
+                    // update if exist or create json file with data
                     writeToFile(resultJson);
 
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }else{
+                // if internet connection does not exist try to get internal saved json data
                 File f = new File(pathToJson,jsonName+".json");
+                // check if has internal json data
                 if(f.exists() && f.isFile()){
                     Log.d(LOG_TAG, "File exist and is file");
                     resultJson = readFile(f);
@@ -116,103 +112,119 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(String strJson) {
             super.onPostExecute(strJson);
 
-            if(strJson.isEmpty()){
+            // if json data is empty show alert dialog and start another activity for waiting internet connection
+            if (strJson.isEmpty()) {
                 AlertDialog.Builder dialog = new AlertDialog.Builder(context);
-                dialog.setTitle( R.string.attention_txt )
+                dialog.setTitle(R.string.attention_txt)
                         .setMessage(R.string.need_connection_txt)
                         .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialoginterface, int i) {
                                 Intent noConnection = new Intent(context, NoConnection.class);
                                 startActivity(noConnection);
+                                finish();
                             }
                         }).show();
-            }
+            }else{
 
-            try {
-                JSONArray artists = new JSONArray(strJson);
+                try {
+                    // convert json string to JSONArray
+                    JSONArray artists = new JSONArray(strJson);
 
-                int count = artists.length();
-                List<ObjectItem> list = new ArrayList<ObjectItem>();
+                    int count = artists.length();
+                    List<ObjectItem> list = new ArrayList<ObjectItem>();
 
-                for (int i = 0; i < count; i++) {
-                    JSONObject artist = artists.getJSONObject(i);
+                    // add data from JSONArray to ArrayList list
+                    for (int i = 0; i < count; i++) {
+                        JSONObject artist = artists.getJSONObject(i);
 
-                    JSONObject cover = artist.getJSONObject("cover");
+                        JSONObject cover = artist.getJSONObject("cover");
 
-                    int id = artist.getInt("id");
-                    String name = artist.getString("name");
-                    String descr = artist.getString("description");
+                        int id = artist.getInt("id");
+                        String name = artist.getString("name");
+                        String descr = artist.getString("description");
 
-                    List<String> genres = new ArrayList<String>();
-                    for (int j = 0; j < artist.getJSONArray("genres").length(); j++) {
-                        genres.add( artist.getJSONArray("genres").getString(j) );
+                        List<String> genres = new ArrayList<String>();
+                        for (int j = 0; j < artist.getJSONArray("genres").length(); j++) {
+                            genres.add(artist.getJSONArray("genres").getString(j));
+                        }
+
+                        int albums = artist.getInt("albums");
+                        int tracks = artist.getInt("tracks");
+                        ObjectItem item = new ObjectItem(id, name, descr, cover, genres, albums, tracks);
+                        if (!artist.isNull("link")) {
+                            item.setLink(artist.getString("link"));
+                        }
+                        list.add(item);
                     }
 
-                    int albums = artist.getInt("albums");
-                    int tracks = artist.getInt("tracks");
-                    ObjectItem item = new ObjectItem(id, name, descr, cover,genres, albums, tracks);
-                    if(!artist.isNull("link")){
-                        item.setLink(artist.getString("link"));
-                    }
-                    list.add(item);
-                }
+                    recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
 
-                recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
+                    llm = new LinearLayoutManager(context);
+                    recyclerView.setLayoutManager(llm);
 
-                llm = new LinearLayoutManager(context);
-                recyclerView.setLayoutManager(llm);
+                    // initialize adapter
+                    RAdapter = new RecycleAdapter(context, list);
+                    recyclerView.setAdapter(RAdapter);
+                    // add click listener
+                    recyclerView.addOnItemTouchListener(
+                            new RecyclerItemClickListener(context, new RecyclerItemClickListener.OnItemClickListener() {
+                                @Override
+                                public void onItemClick(View view, int position) {
+                                    // close all async tasks
+                                    RAdapter.closeAllTasks();
+                                    final int result = 1;
+                                    Intent more = new Intent(context, MoreAbout.class);
+                                    // get artist object by position
+                                    ObjectItem artist = RAdapter.getObjectItem(position);
 
-                // инициализация нашего адаптера
-                RAdapter = new RecycleAdapter(context, list);
-                recyclerView.setAdapter(RAdapter);
+                                    // put extra data to send for another activity
+                                    try {
+                                        more.putExtra("image", artist.getImage("big"));
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                    more.putExtra("id", artist.getId());
+                                    more.putExtra("name", artist.getTitle());
+                                    more.putExtra("descr", artist.getDescription());
+                                    more.putExtra("genres", artist.getGenres(", "));
+                                    more.putExtra("albums", artist.getAlbums());
+                                    more.putExtra("tracks", artist.getTracks());
+                                    more.putExtra("link", artist.getLink());
 
-                recyclerView.addOnItemTouchListener(
-                        new RecyclerItemClickListener(context, new RecyclerItemClickListener.OnItemClickListener() {
-                            @Override
-                            public void onItemClick(View view, int position) {
-
-                                RAdapter.closeAllTasks();
-                                final int result = 1;
-                                Intent more = new Intent(context, MoreAbout.class);
-                                List<String> genres = new ArrayList<String>();
-                                genres.add("pop");
-                                ObjectItem artist = RAdapter.getObjectItem(position);
-
-                                try {
-                                    more.putExtra("image", artist.getImage("big"));
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
+                                    // start activity
+                                    startActivityForResult(more, result);
                                 }
+                            })
+                    );
+                    // add scroll listener
+                    recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                        /**
+                         * Getting and setting the first and last visible items
+                         *
+                         * @param view
+                         * @param dx
+                         * @param dy
+                         */
+                        @Override
+                        public void onScrolled(RecyclerView view, int dx, int dy) {
+                            super.onScrolled(view, dx, dy);
+                            int top = llm.findFirstVisibleItemPosition();
+                            int bottom = llm.findLastVisibleItemPosition();
+                            RAdapter.setVisibleItems(top, bottom);
+                        }
+                    });
 
-                                more.putExtra("id", artist.getId());
-                                more.putExtra("name", artist.getTitle());
-                                more.putExtra("descr", artist.getDescription());
-                                more.putExtra("genres", artist.getGenres(", "));
-                                more.putExtra("albums", artist.getAlbums());
-                                more.putExtra("tracks", artist.getTracks());
-                                more.putExtra("link", artist.getLink());
-
-                                startActivityForResult(more, result);
-                            }
-                        })
-                );
-
-                recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
-                    @Override
-                    public void onScrolled(RecyclerView view, int dx, int dy) {
-                        super.onScrolled(view, dx, dy);
-                        int top = llm.findFirstVisibleItemPosition();
-                        int bottom = llm.findLastVisibleItemPosition();
-                        RAdapter.setVisibleItems(top, bottom);
-                    }
-                });
-
-            } catch (JSONException e) {
-                e.printStackTrace();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
 
+    /**
+     * Write json data string to file
+     * @param data
+     */
     private void writeToFile(String data) {
         if(!pathToJson.exists()){
             pathToJson.mkdir();
@@ -228,6 +240,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * read data json from file
+     * @param file
+     * @return
+     */
     private String readFile(File file){
         String ret = "";
         try {

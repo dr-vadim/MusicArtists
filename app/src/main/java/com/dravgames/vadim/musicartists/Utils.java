@@ -14,6 +14,10 @@ public class Utils {
 
     private Utils() {};
 
+    /**
+     * Check if external storage is removable
+     * @return
+     */
     public static boolean isExternalStorageRemovable() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
             return Environment.isExternalStorageRemovable();
@@ -21,6 +25,11 @@ public class Utils {
         return true;
     }
 
+    /**
+     * Getting external cache directories
+     * @param context
+     * @return
+     */
     public static File getExternalCacheDir(Context context) {
         if (hasExternalCacheDir()) {
             return context.getExternalCacheDir();
@@ -31,22 +40,19 @@ public class Utils {
         return new File(Environment.getExternalStorageDirectory().getPath() + cacheDir);
     }
 
+    /**
+     * Check if has external cache dir
+     * @return
+     */
     public static boolean hasExternalCacheDir() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO;
     }
 
-    public static String encode(String s)
-    {
-        try
-        {
-            return java.net.URLEncoder.encode(s, "UTF-8");
-        }
-        catch (java.io.UnsupportedEncodingException e)
-        {
-            throw new RuntimeException("UTF-8 is an unknown encoding!?");
-        }
-    }
-
+    /**
+     * Check internet connection
+     * @param context
+     * @return
+     */
     public static boolean isOnline(Context context) {
         ConnectivityManager cm =
                 (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);

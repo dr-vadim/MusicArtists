@@ -14,12 +14,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.jakewharton.disklrucache.Util;
-
 import org.json.JSONException;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +26,6 @@ import java.util.List;
 public class RecycleAdapter extends RecyclerView.Adapter<RecycleAdapter.ViewHolder> {
 
     public static String LOG_TAG = "my_log";
-    public static int layoutPosition = 0;
     public int top,bottom = 0;
 
     private List<ObjectItem> data;
@@ -49,6 +44,7 @@ public class RecycleAdapter extends RecyclerView.Adapter<RecycleAdapter.ViewHold
 
         ViewHolder(View item){
             super(item);
+            // get the view items
             title = (TextView) item.findViewById(R.id.Name);
             genres = (TextView) item.findViewById(R.id.Genres);
             albums = (TextView) item.findViewById(R.id.Albums);
@@ -56,13 +52,25 @@ public class RecycleAdapter extends RecyclerView.Adapter<RecycleAdapter.ViewHold
         }
     }
 
+    /**
+     * Constructor whose set the data, context and initialize cache
+     * @param context
+     * @param data
+     */
     public RecycleAdapter(Context context, List<ObjectItem> data){
         this.data = data;
         tasks = new ArrayList<DawnloadImageTask>();
         this.context = context;
+        // initialize cache
         diskLruImageCache = new DiskLruImageCache(context,DISK_CACHE_SUBDIR,DISK_CACHE_SIZE,Bitmap.CompressFormat.JPEG,70);
     }
 
+    /**
+     * Called when RecyclerView needs a new RecyclerView.ViewHolder of the given type to represent an item.
+     * @param parent
+     * @param viewType
+     * @return
+     */
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
@@ -71,6 +79,11 @@ public class RecycleAdapter extends RecyclerView.Adapter<RecycleAdapter.ViewHold
         return pvh;
     }
 
+    /**
+     *  Called by RecyclerView to display the data at the specified position.
+     * @param holder
+     * @param position
+     */
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         ObjectItem objectItem = data.get(position);
@@ -113,14 +126,19 @@ public class RecycleAdapter extends RecyclerView.Adapter<RecycleAdapter.ViewHold
         return data.size();
     }
 
+    /**
+     * Get item title by position
+     * @param position
+     * @return
+     */
     public String getItemTitle(int position){
         return data.get(position).getTitle();
     }
 
     /**
-     * Функция устанавливает значения индекса самому верхнему и самому нижнему видимых элементов списка
-     * @param top верхний видемый элемент
-     * @param bottom нижни видимый элемент
+     * Set index of top and bottom visible items
+     * @param top visible item
+     * @param bottom bottom visible item
      */
     public void setVisibleItems(int top,int bottom){
         this.top = top;
@@ -129,7 +147,7 @@ public class RecycleAdapter extends RecyclerView.Adapter<RecycleAdapter.ViewHold
     }
 
     /**
-     * Функция останавливает запущенные асинхронные задачи сохраненные в списке tasks
+     * Cloase all async tasks
      */
     public void closeAllTasks(){
         for (DawnloadImageTask task: tasks){
@@ -140,16 +158,16 @@ public class RecycleAdapter extends RecyclerView.Adapter<RecycleAdapter.ViewHold
     }
 
     /**
-     * Получаем объект из списка
-     * @param index объекта
-     * @return объект
+     * Get object from list by index
+     * @param index object
+     * @return object
      */
     public ObjectItem getObjectItem(int index){
         return data.get(index);
     }
 
     /**
-     * Класс для загрузки изображений ассинхронно
+     * Getting and setting the main image from url link
      */
     private class DawnloadImageTask extends AsyncTask<String, Void, Bitmap> {
         ImageView bmImage;

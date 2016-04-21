@@ -1,6 +1,5 @@
 package com.dravgames.vadim.musicartists;
 
-import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 
 import org.json.JSONObject;
